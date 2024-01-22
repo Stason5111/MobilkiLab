@@ -1,6 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'weather_repository.dart';
+import 'weather_data.dart';
 
 void main() => runApp(MyWeatherApp());
 
@@ -22,23 +22,18 @@ class WeatherScreen extends StatefulWidget {
 class _WeatherScreenState extends State<WeatherScreen> {
   final TextEditingController _cityController = TextEditingController();
   WeatherData? _weatherData;
+  final WeatherRepository _weatherRepository = WeatherRepository();
 
   Future<void> _getWeather() async {
-    final String apiKey = '5433f6e50fbce585bc66862ed113f315';
-    final String city = _cityController.text;
-
-    final Uri uri = Uri.parse(
-        'https://api.openweathermap.org/data/2.5/weather?q=$city&appid=$apiKey');
-
-    final response = await http.get(uri);
-
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> data = json.decode(response.body);
+    try {
+      final String city = _cityController.text;
+      final WeatherData weatherData = await _weatherRepository.getWeather(city);
       setState(() {
-        _weatherData = WeatherData.fromJson(data);
+        _weatherData = weatherData;
       });
-    } else {
-      throw Exception('Failed to load weather data');
+    } catch (e) {
+      print('Error: $e');
+      // Обработка ошибок
     }
   }
 
@@ -87,29 +82,6 @@ class _WeatherScreenState extends State<WeatherScreen> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class WeatherData {
-  final double temperature;
-  final String description;
-  final String icon;
-
-  WeatherData({
-    required this.temperature,
-    required this.description,
-    required this.icon,
-  });
-
-  factory WeatherData.fromJson(Map<String, dynamic> json) {
-    final main = json['main'];
-    final weather = json['weather'][0];
-
-    return WeatherData(
-      temperature: main['temp'].toDouble() - 273.15,
-      description: weather['description'],
-      icon: weather['icon'],
     );
   }
 }
