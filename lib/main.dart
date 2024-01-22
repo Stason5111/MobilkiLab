@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'task_repository.dart';
 
 void main() => runApp(MyApp());
 
@@ -20,9 +20,9 @@ class ToDoList extends StatefulWidget {
 
 class _ToDoListState extends State<ToDoList> {
   Brightness _brightness = Brightness.light;
-  bool _brightnessInitialized = false; // Новая переменная для отслеживания инициализации _brightness
   late List<Task> tasks = [];
   TextEditingController taskController = TextEditingController();
+  final TaskRepository _taskRepository = TaskRepository();
 
   @override
   void initState() {
@@ -30,29 +30,19 @@ class _ToDoListState extends State<ToDoList> {
     _loadData();
   }
 
-  void _loadData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String savedBrightness = prefs.getString('brightness') ?? 'light';
+  Future<void> _loadData() async {
+    Brightness brightness = await _taskRepository.loadBrightness();
+    List<Task> loadedTasks = await _taskRepository.loadTasks();
 
-    if (!_brightnessInitialized) {
-      setState(() {
-        _brightness = savedBrightness == 'light' ? Brightness.light : Brightness.dark;
-        _brightnessInitialized = true;
-      });
-    }
-
-    List<String> taskList = prefs.getStringList('tasks') ?? [];
     setState(() {
-      tasks = taskList.map((task) => Task.fromJson(task)).toList();
+      _brightness = brightness;
+      tasks = loadedTasks;
     });
   }
 
-  void _saveData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString('brightness', _brightness == Brightness.light ? 'light' : 'dark');
-
-    List<String> taskList = tasks.map((task) => task.toJson()).toList();
-    prefs.setStringList('tasks', taskList);
+  Future<void> _saveData() async {
+    await _taskRepository.saveBrightness(_brightness);
+    await _taskRepository.saveTasks(tasks);
   }
 
   void _toggleBrightness() {
