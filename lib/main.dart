@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'service.dart';
 
 void main() {
   runApp(MyApp());
@@ -28,8 +29,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _convertTemperature() {
     double celsius = double.tryParse(_celsiusController.text) ?? 0.0;
-    double fahrenheit = (celsius * 9 / 5) + 32;
-    _fahrenheitController.text = fahrenheit.toStringAsFixed(2);
+    double fahrenheit = TemperatureConverterService.convertCelsiusToFahrenheit(celsius);
+    setState(() {
+      _fahrenheitController.text = fahrenheit.toStringAsFixed(2);
+    });
   }
 
   @override
