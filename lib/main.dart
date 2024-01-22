@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'news_repository.dart';
+import 'news_model.dart';
 
 void main() => runApp(MyApp());
 
@@ -20,30 +20,12 @@ class NewsList extends StatefulWidget {
 }
 
 class _NewsListState extends State<NewsList> {
-  List<Map<String, dynamic>> newsList = [];
+  late Future<List<News>> newsList;
 
   @override
   void initState() {
     super.initState();
-    fetchNews();
-  }
-
-  Future<void> fetchNews() async {
-    try {
-      final response = await http.get(
-        Uri.parse('https://newsapi.org/v2/top-headlines?country=us&apiKey=7095f12df4cc43658775cb9c270e8bd2'),
-      );
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(response.body);
-        setState(() {
-          newsList = List<Map<String, dynamic>>.from(data['articles'] ?? []);
-        });
-      } else {
-        print('Failed to load news. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error: $e');
-    }
+    newsList = NewsRepository().fetchNews();
   }
 
   @override
@@ -52,24 +34,36 @@ class _NewsListState extends State<NewsList> {
       appBar: AppBar(
         title: Text('News App'),
       ),
-      body: ListView.builder(
-        itemCount: newsList.length,
-        itemBuilder: (context, index) {
-          final title = newsList[index]['title'] ?? 'No Title';
-          final description = newsList[index]['description'] ?? 'No Description';
+      body: FutureBuilder<List<News>>(
+        future: newsList,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else {
+            List<News> news = snapshot.data ?? [];
+            return ListView.builder(
+              itemCount: news.length,
+              itemBuilder: (context, index) {
+                final title = news[index].title;
+                final description = news[index].description;
 
-          return ListTile(
-            title: Text(title),
-            subtitle: Text(description),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => NewsDetail(newsList[index]),
-                ),
-              );
-            },
-          );
+                return ListTile(
+                  title: Text(title),
+                  subtitle: Text(description),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => NewsDetail(news[index]),
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          }
         },
       ),
     );
@@ -77,7 +71,7 @@ class _NewsListState extends State<NewsList> {
 }
 
 class NewsDetail extends StatelessWidget {
-  final Map<String, dynamic> news;
+  final News news;
 
   NewsDetail(this.news);
 
@@ -93,16 +87,16 @@ class NewsDetail extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              news['title'] ?? 'No Title',
+              news.title,
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
             SizedBox(height: 8),
-            Text(news['description'] ?? 'No Description'),
+            Text(news.description),
             SizedBox(height: 16),
-            Text(news['content'] ?? 'No Content'),
+            Text(news.content),
           ],
         ),
       ),
