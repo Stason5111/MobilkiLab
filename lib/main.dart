@@ -25,7 +25,6 @@ class _NewsListState extends State<NewsList> {
   @override
   void initState() {
     super.initState();
-    newsList = NewsRepository().fetchNews();
   }
 
   @override
@@ -35,7 +34,7 @@ class _NewsListState extends State<NewsList> {
         title: Text('News App'),
       ),
       body: FutureBuilder<List<News>>(
-        future: newsList,
+        future: NewsRepository().fetchNews(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
