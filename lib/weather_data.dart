@@ -3,7 +3,7 @@ class WeatherData {
   final String description;
   final String icon;
 
-  WeatherData({
+  const WeatherData({
     required this.temperature,
     required this.description,
     required this.icon,
