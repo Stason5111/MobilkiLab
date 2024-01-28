@@ -3,7 +3,7 @@ class News {
   final String description;
   final String content;
 
-  News({required this.title, required this.description, required this.content});
+  const News({required this.title, required this.description, required this.content});
 
   factory News.fromJson(Map<String, dynamic> json) {
     return News(
